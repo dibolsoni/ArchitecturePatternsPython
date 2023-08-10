@@ -6,7 +6,7 @@ A study of the book **Architecture Patterns With Python** by *Harry Percival* an
 As Python continues to grow in popularity, projects are becoming larger and more complex. Many Python developers are taking an interest in high-level software design patterns such as hexagonal/clean architecture, event-driven architecture, and the strategic patterns prescribed by domain-driven design (DDD). But translating those patterns into Python isn’t always straightforward...
 
 ### Domain
-A multi-region order allocator to batches.
+A multi-region order allocator to batches of stock.
 
 ### Topics:
 - [x] Domain Modeling
