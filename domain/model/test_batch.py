@@ -1,7 +1,7 @@
 from datetime import date
 
-from Batch import Batch
-from OrderLine import OrderLine
+from domain.model.batch import Batch
+from domain.model.order_line import OrderLine
 
 
 def make_batch_and_line(sku, batch_qty, line_qty):
@@ -44,9 +44,9 @@ def test_can_only_deallocate_allocated_lines():
 def test_deallocate_an_allocated_line():
     batch, line = make_batch_and_line('SMALL-TABLE', 20, 2)
     batch.allocate(line)
-    assert batch.has_orderline(line)
+    assert batch.has_order_line(line)
     batch.deallocate(line)
-    assert not batch.has_orderline(line)
+    assert not batch.has_order_line(line)
 
 
 def test_allocation_is_idempotent():

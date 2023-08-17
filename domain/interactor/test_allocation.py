@@ -1,11 +1,10 @@
 import datetime
+import pytest
 from datetime import date
 
-import pytest
-
-from Allocation import allocate, OutOfStock
-from Batch import Batch
-from OrderLine import OrderLine
+from domain.interactor import allocate, OutOfStock
+from domain.model.batch import Batch
+from domain.model.order_line import OrderLine
 
 today = date.today()
 tomorrow = today + datetime.timedelta(days=1)
