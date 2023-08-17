@@ -10,7 +10,7 @@ A multi-region order allocator to batches of stock.
 
 ### Topics:
 - [x] Domain Modeling
-- [ ] Repository Pattern
+- [x] Repository Pattern
 - [ ] Abstractions
 - [ ] Api and Service Layer
 - [ ] TDD
