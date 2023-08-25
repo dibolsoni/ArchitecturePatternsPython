@@ -8,7 +8,7 @@ class OutOfStock(Exception):
 	...
 
 
-def allocate(order_line: OrderLine, batches: List[Batch]) -> Batch:
+def allocation(order_line: OrderLine, batches: List[Batch]) -> Batch:
 	try:
 		batch = next(
 			b for b in sorted(batches) if b.can_allocate(order_line)

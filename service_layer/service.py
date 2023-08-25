@@ -16,6 +16,6 @@ def allocate(order_line: OrderLine, repo: AbstractRepository, session: Session) 
 	batches = repo.list(Batch)
 	if not is_valid_sku(order_line.sku, batches):
 		raise InvalidSku(f'Invalid sku: {order_line.sku}')
-	batchref = allocation.allocate(order_line, batches).reference
+	batchref = allocation.allocation(order_line, batches).reference
 	session.flush()
 	return batchref
