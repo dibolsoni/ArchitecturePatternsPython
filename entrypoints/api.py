@@ -7,7 +7,7 @@ from typing import Annotated
 from fastapi import FastAPI, Body, HTTPException
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from domain.interactor.allocation import OutOfStock
+from domain.service.allocation import OutOfStock
 from domain.model.model import Model
 from service_layer import service
 from config import Config

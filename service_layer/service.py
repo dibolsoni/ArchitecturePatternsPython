@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 from domain import Sku, Batch, OrderLine, Reference
 from adapters import AbstractRepository
-from domain.interactor import allocation
+from domain.service import allocation
 
 
 class InvalidSku(Exception):

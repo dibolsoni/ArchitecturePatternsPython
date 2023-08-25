@@ -2,7 +2,7 @@ import datetime
 import pytest
 from datetime import date
 
-from domain.interactor.allocation import allocate, OutOfStock
+from domain.service.allocation import allocate, OutOfStock
 from domain.model.batch import Batch
 from domain.model.order_line import OrderLine
 
