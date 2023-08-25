@@ -1,7 +1,7 @@
 from domain.model.batch import Batch
 from domain.model.order_line import OrderLine
 from domain.types import Quantity, Reference, Sku
-from domain.interactor import allocation
+from domain.interactor.allocation import allocate
 
 __all__ = (
     'Batch',
@@ -9,5 +9,5 @@ __all__ = (
     'Quantity',
     'Reference',
     'Sku',
-    'allocation'
+    'allocate'
 )

@@ -1,3 +1,6 @@
 pytest~=7.4.0
 fastapi~=0.101.0
 sqlalchemy~=1.4.39
+requests~=2.31.0
+uvicorn~=0.23.2
+jsonify~=0.5

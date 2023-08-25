@@ -4,5 +4,5 @@ from domain.types import Reference
 
 
 @dataclass
-class Model:
+class Model(object):
     reference: Reference
