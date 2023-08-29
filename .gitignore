@@ -5,3 +5,4 @@
 __pycache__/
 /test.db
 /test.db-journal
+venv/

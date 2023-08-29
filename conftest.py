@@ -2,14 +2,14 @@ import pytest
 from datetime import date, timedelta
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, clear_mappers
-from config import Config
+from config import DB
 from domain import Batch, OrderLine
 from adapters.sql_alchemy_repository.orm import metadata, start_mappers
 
 
 @pytest.fixture
 def engine():
-	return create_engine(Config.DB.URI_TEST, echo=True)
+	return create_engine(DB.URI_TEST, echo=True)
 
 
 @pytest.fixture

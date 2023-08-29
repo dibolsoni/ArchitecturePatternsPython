@@ -43,8 +43,8 @@ def test_returns_allocated_batch_ref():
 
 	line = OrderLine('oref', 'HIGHBROW-POSTER', 10)
 
-	allocation = allocation(line, [in_stock_batch, shipment_batch])
-	assert allocation.reference == in_stock_batch.reference
+	allocated = allocation(line, [in_stock_batch, shipment_batch])
+	assert allocated.reference == in_stock_batch.reference
 
 
 def test_raises_out_of_stock_exception_if_cannot_allocate():

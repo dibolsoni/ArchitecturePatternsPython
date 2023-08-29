@@ -10,14 +10,14 @@ from sqlalchemy.orm import sessionmaker
 from domain.service.allocation import OutOfStock
 from domain.model.model import Model
 from service_layer import service
-from config import Config
+from config import DB
 from domain import Batch, OrderLine, Quantity, Sku, Reference
 from adapters.sql_alchemy_repository.orm import start_mappers, metadata
 from adapters.sql_alchemy_repository.sql_alchemy_repository import SqlAlchemyRepository
 from service_layer.service import InvalidSku
 
 start_mappers()
-engine = create_engine(Config.DB.URI)
+engine = create_engine(DB.uri())
 metadata.create_all(engine)
 app = FastAPI()
 session = sessionmaker(bind=engine)()
@@ -25,7 +25,7 @@ session = sessionmaker(bind=engine)()
 
 @app.get('/', response_model=str)
 async def hello_world():
-	return "hello world"
+	return "hello world!!"
 
 
 @app.post('/allocate', response_model=Model, status_code=201)
@@ -47,6 +47,8 @@ async def allocate_endpoint(
 async def get_batch(batch_reference: str):
 	repo = SqlAlchemyRepository(session=session)
 	batch = repo.get(Batch, batch_reference)
+	if not batch:
+		raise HTTPException(status_code=400, detail={'message': 'not found'})
 	return batch.to_json()
 
 
@@ -61,10 +63,9 @@ def add_batches():
 
 
 def start_app(should_reload: bool):
-	# uvicorn.run("__main__:app", reload=True)
-	uvicorn.run("__main__:app", reload=should_reload)
+	uvicorn.run("__main__:app", reload=should_reload, host="0.0.0.0", port=8000)
 
 
 if __name__ == "__main__":
-	# add_batches()
-	start_app(sys.argv[0] == 'reload')
+	add_batches()
+	start_app(True)
