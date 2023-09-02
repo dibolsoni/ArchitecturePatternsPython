@@ -1,12 +1,11 @@
-from dataclasses import dataclass
 from datetime import date
 from typing import Optional
+
+from domain.custom_types import Quantity, Reference, Sku
 from domain.model.model import Model
-from domain.types import Quantity, Reference, Sku
 from domain.model.order_line import OrderLine
 
 
-@dataclass(unsafe_hash=True)
 class Batch(Model):
 	def __init__(self, reference: Reference, sku: Sku, quantity: Quantity, eta: Optional[date] = None):
 		self.reference = reference
@@ -23,12 +22,27 @@ class Batch(Model):
 	def available_quantity(self) -> Quantity:
 		return self._purchased_quantity - self.allocated_quantity
 
+	def __eq__(self, other):
+		if not isinstance(other, Batch):
+			return False
+		return other.reference == self.reference
+
+	def __hash__(self):
+		return hash(self.reference)
+
 	def __gt__(self, other):
 		if self.eta is None:
 			return False
 		if other.eta is None:
 			return True
 		return self.eta > other.eta
+
+	def __lt__(self, other):
+		if self.eta is None:
+			return True
+		if other.eta is None:
+			return False
+		return self.eta < other.eta
 
 	def can_allocate(self, order_line: OrderLine):
 		return self.sku == order_line.sku and self.available_quantity >= order_line.quantity

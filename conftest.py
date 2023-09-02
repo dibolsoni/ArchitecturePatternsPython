@@ -1,44 +1,80 @@
+import time
+from datetime import timedelta, date
+from pathlib import Path
+
 import pytest
-from datetime import date, timedelta
+import requests
+from requests.exceptions import ConnectionError
 from sqlalchemy import create_engine
+from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import sessionmaker, clear_mappers
-from config import DB
+
+from adapters.sql_alchemy_repository.orm import start_mappers, metadata
+from config import API, DB
 from domain import Batch, OrderLine
-from adapters.sql_alchemy_repository.orm import metadata, start_mappers
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def engine():
-	return create_engine(DB.URI_TEST, echo=True)
+	engine = create_engine(DB.URI_TEST, echo=True)
+	metadata.create_all(engine)
+	return engine
 
 
 @pytest.fixture
-def session(engine):
-	metadata.create_all(engine)
+def test_session(engine):
 	start_mappers()
 	yield sessionmaker(bind=engine)()
 	clear_mappers()
 
 
+def wait_for_postgres_to_come_up(engine):
+	deadline = time.time() + 10
+	while time.time() < deadline:
+		try:
+			return engine.connect()
+		except OperationalError:
+			time.sleep(0.5)
+	pytest.fail("Postgres never came up")
+
+
+def wait_for_webapp_to_come_up():
+	deadline = time.time() + 10
+	url = API.url()
+	while time.time() < deadline:
+		try:
+			return requests.get(url)
+		except ConnectionError:
+			time.sleep(0.5)
+	pytest.fail('API never came up')
+
+
 @pytest.fixture
-def default_batches(session) -> list[Batch]:
+def default_batches(test_session) -> list[Batch]:
 	batches = [
 		Batch('batch1', 'sku1', 100, eta=None),
 		Batch('batch2', 'sku2', 100, eta=date.today()),
 		Batch('batch2', 'sku2', 100, eta=date.today() + timedelta(days=1))
 	]
-	session.add_all(batches)
+	test_session.add_all(batches)
 	return batches
 
 
 @pytest.fixture
-def default_order_lines(session) -> list[OrderLine]:
+def default_order_lines(test_session) -> list[OrderLine]:
 	order_lines = [
 		OrderLine('order1', 'sku1', 2),
 		OrderLine('order2', 'sku1', 3),
 		OrderLine('order3', 'sku1', 1),
 		OrderLine('order4', 'sku2', 5),
 	]
-	session.add_all(order_lines)
-	session.flush()
+	test_session.add_all(order_lines)
+	test_session.flush()
 	return order_lines
+
+
+@pytest.fixture
+def restart_api():
+	(Path(__file__).parent / "api.py").touch()
+	time.sleep(0.5)
+	wait_for_webapp_to_come_up()

@@ -4,8 +4,8 @@ from adapters.sql_alchemy_repository.sql_alchemy_repository import SqlAlchemyRep
 
 
 @pytest.fixture
-def repo(session):
-	return SqlAlchemyRepository(session=session)
+def repo(test_session):
+	return SqlAlchemyRepository(session=test_session)
 
 
 def test_repository_can_load_batches(default_batches, repo):

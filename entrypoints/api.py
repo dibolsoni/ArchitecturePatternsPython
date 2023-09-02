@@ -1,55 +1,61 @@
-import json
-import sys
-
-import uvicorn
-from datetime import timedelta, date
-from typing import Annotated
-from fastapi import FastAPI, Body, HTTPException
+from datetime import timedelta, date, datetime
+from flask import Flask, request
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from domain.service.allocation import OutOfStock
-from domain.model.model import Model
-from service_layer import service
-from config import DB
-from domain import Batch, OrderLine, Quantity, Sku, Reference
 from adapters.sql_alchemy_repository.orm import start_mappers, metadata
 from adapters.sql_alchemy_repository.sql_alchemy_repository import SqlAlchemyRepository
+from config import DB, ENV
+from domain import Batch
+from domain.service.allocation import OutOfStock
+from service_layer import service
 from service_layer.service import InvalidSku
 
-start_mappers()
 engine = create_engine(DB.uri())
 metadata.create_all(engine)
-app = FastAPI()
+start_mappers()
+app = Flask(__name__)
 session = sessionmaker(bind=engine)()
 
 
-@app.get('/', response_model=str)
-async def hello_world():
+@app.get('/')
+def hello_world():
 	return "hello world!!"
 
 
-@app.post('/allocate', response_model=Model, status_code=201)
-async def allocate_endpoint(
-	reference: Annotated[Reference, Body(embed=True)],
-	sku: Annotated[Sku, Body(embed=True)],
-	quantity: Annotated[Quantity, Body(embed=True)],
-):
-	line = OrderLine(reference, sku, quantity)
+@app.post('/allocate')
+def allocate():
+	reference = request.json['reference']
+	sku = request.json['sku']
+	quantity = request.json['quantity']
 	repo = SqlAlchemyRepository(session=session)
 	try:
-		batchref = service.allocate(line, repo, session)
+		batchref = service.allocate(reference=reference, sku=sku, quantity=quantity, repo=repo, session=session)
 	except (OutOfStock, InvalidSku) as e:
-		raise HTTPException(status_code=400, detail={'message': str(e)})
-	return {'reference': batchref}
+		return {'message': str(e)}, 400
+	return {'reference': batchref}, 201
 
 
 @app.get('/batch/{batch_reference}')
-async def get_batch(batch_reference: str):
+def get_batch(batch_reference: str):
 	repo = SqlAlchemyRepository(session=session)
 	batch = repo.get(Batch, batch_reference)
 	if not batch:
-		raise HTTPException(status_code=400, detail={'message': 'not found'})
-	return batch.to_json()
+		return {'message': 'not found'}, 404
+	return batch.to_json(), 200
+
+
+@app.post('/batch')
+def add_batch():
+	reference = request.json['reference']
+	sku = request.json['sku']
+	quantity = request.json['quantity']
+	eta = request.json['eta']
+	repo = SqlAlchemyRepository(session=session)
+	if eta is not None:
+		eta = datetime.fromisoformat(eta).date()
+	batch = Batch(reference=reference, sku=sku, quantity=quantity, eta=eta)
+	repo.add(batch)
+	return "OK", 201
 
 
 def add_batches():
@@ -62,10 +68,9 @@ def add_batches():
 	session.commit()
 
 
-def start_app(should_reload: bool):
-	uvicorn.run("__main__:app", reload=should_reload, host="0.0.0.0", port=8000)
+def start_app():
+	app.run(host="0.0.0.0", port=8000, use_reloader=True)
 
 
 if __name__ == "__main__":
-	add_batches()
-	start_app(True)
+	start_app()

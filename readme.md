@@ -13,7 +13,7 @@ A multi-region order allocator to batches of stock.
 - [x] Repository Pattern
 - [x] Abstractions
 - [x] Api and Service Layer
-- [ ] TDD
+- [x] High and Low Gear TDD
 - [ ] Unit of Work Pattern
 - [ ] Aggregates Pattern
 - [ ] Events

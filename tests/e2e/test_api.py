@@ -1,71 +1,38 @@
-import time
 import pytest
 import requests
-from requests.exceptions import ConnectionError
-from pathlib import Path
-
-from sqlalchemy.exc import OperationalError
-
 from config import API
-from domain import Batch
+from datetime import timedelta, date
 
 
-def wait_for_postgres_to_come_up(engine):
-	deadline = time.time() + 10
-	while time.time() < deadline:
-		try:
-			return engine.connect()
-		except OperationalError:
-			time.sleep(0.5)
-	pytest.fail("Postgres never came up")
-
-
-def wait_for_webapp_to_come_up():
-	deadline = time.time() + 10
+def post_to_add_batch(ref, sku, qty, eta):
 	url = API.url()
-	while time.time() < deadline:
-		try:
-			return requests.get(url)
-		except ConnectionError:
-			time.sleep(0.5)
-	pytest.fail('API never came up')
-
-
-@pytest.fixture
-def restart_api():
-	(Path(__file__).parent / "api.py").touch()
-	time.sleep(0.5)
-	wait_for_webapp_to_come_up()
-
-
-@pytest.mark.usefixtures('restart_api')
-def test_api_returns_allocation(default_batches: list[Batch]):
-	payload = {'reference': 'some_reference', 'sku': 'sku2', 'quantity': 2}
-	r = requests.post(f'{API.url()}/allocate', json=payload)
+	r = requests.post(
+		f'{url}/batch', json={"reference": ref, "sku": sku, "quantity": qty, "eta": eta},
+	)
 	assert r.status_code == 201
-	assert r.json() == {'reference': 'batch2'}
 
 
-@pytest.mark.usefixtures('restart_api')
-def test_allocations_are_persisted(default_batches):
-	batch = default_batches[2]
-	payload = {'reference': 'some_reference', 'sku': batch.sku, 'quantity': 2}
-	requests.post(f'{API.url()}/allocate', json=payload)
-	get = requests.get(f'{API.url()}/batch/{batch.reference}')
-	assert get.json()['quantity'] == int(batch._purchased_quantity) - 2
+@pytest.mark.usefixtures("test_session")
+@pytest.mark.usefixtures("restart_api")
+def test_happy_path_returns_201_and_allocated_batch():
+	today = date.today()
+	tomorrow = today + timedelta(days=1)
+	later = tomorrow + timedelta(days=1)
+	post_to_add_batch('laterbatch', 'CHAIR', 100, tomorrow.isoformat())
+	post_to_add_batch('earlybatch', 'CHAIR', 100, today.isoformat())
+	post_to_add_batch('otherbatch', 'CHAIR', 100, later.isoformat())
+	data = {"reference": "order1", "sku": "CHAIR", "quantity": 3}
+	url = API.url()
+	r = requests.post(f'{url}/allocate', json=data)
+	assert r.status_code == 201
+	assert r.json()["reference"] == "earlybatch"
 
 
-@pytest.mark.usefixtures('restart_api')
-def test_400_message_for_out_of_stock(default_batches):
-	payload = {'reference': 'someref', 'sku': 'sku1', 'quantity': 120}
-	r = requests.post(f'{API.url()}/allocate', json=payload)
+@pytest.mark.usefixtures("test_session")
+@pytest.mark.usefixtures("restart_api")
+def test_unhappy_path_returns_400_and_error_message():
+	data = {"reference": "order2", "sku": "unknown_sku", "quantity": 1}
+	url = API.url()
+	r = requests.post(f'{url}/allocate', json=data)
 	assert r.status_code == 400
-	assert r.json()['detail']['message'] == f'Out of stock for sku: sku1'
-
-
-@pytest.mark.usefixtures('restart_api')
-def test_400_message_for_invalid_sku():
-	payload = {'reference': 'someref', 'sku': 'invalid_sku', 'quantity': 10}
-	r = requests.post(f'{API.url()}/allocate', json=payload)
-	assert r.status_code == 400
-	assert r.json()['detail']['message'] == f'Invalid sku: invalid_sku'
+	assert r.json()["message"] == f'Invalid sku: unknown_sku'

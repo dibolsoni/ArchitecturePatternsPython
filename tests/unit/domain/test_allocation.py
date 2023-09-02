@@ -25,8 +25,8 @@ def test_prefers_current_stock_batches_to_shipments():
 
 
 def test_prefers_earlier_batches():
-	earliest = Batch('speedy-batch', 'MINIMALIST-SPOON', 100, eta=today)
 	medium = Batch('normal-batch', 'MINIMALIST-SPOON', 100, eta=tomorrow)
+	earliest = Batch('speedy-batch', 'MINIMALIST-SPOON', 100, eta=today)
 	latest = Batch('slow-batch', 'MINIMALIST-SPOON', 100, eta=later)
 	line = OrderLine('order1', 'MINIMALIST-SPOON', 10)
 

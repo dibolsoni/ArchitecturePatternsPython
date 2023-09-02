@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from domain.types import Reference
+from domain.custom_types import Reference
 
 
 @dataclass

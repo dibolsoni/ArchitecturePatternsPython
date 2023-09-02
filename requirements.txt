@@ -1,8 +1,8 @@
 pytest~=7.4.0
-fastapi~=0.101.0
 sqlalchemy~=1.4.39
 requests~=2.31.0
 uvicorn~=0.23.2
 jsonify~=0.5
 python-decouple~=3.8
 psycopg2-binary~=2.9.7
+Flask~=2.3.3

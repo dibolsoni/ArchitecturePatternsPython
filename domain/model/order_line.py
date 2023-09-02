@@ -1,5 +1,5 @@
 from domain.model.model import Model
-from domain.types import Sku, Quantity
+from domain.custom_types import Sku, Quantity
 from dataclasses import dataclass
 
 
