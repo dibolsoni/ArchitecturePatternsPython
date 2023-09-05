@@ -14,7 +14,7 @@ A multi-region order allocator to batches of stock.
 - [x] Abstractions
 - [x] Api and Service Layer
 - [x] High and Low Gear TDD
-- [ ] Unit of Work Pattern
+- [x] Unit of Work Pattern
 - [ ] Aggregates Pattern
 - [ ] Events
 - [ ] Message Bus
