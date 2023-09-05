@@ -14,9 +14,9 @@ class AbstractRepository(abc.ABC):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def get(self, model: Model, reference: Reference) -> Model:
+    def get(self, reference: Reference) -> Model:
         raise NotImplementedError
 
     @abc.abstractmethod
-    def list(self, model: Model) -> list[Model]:
+    def list(self) -> list[Model]:
         raise NotImplementedError

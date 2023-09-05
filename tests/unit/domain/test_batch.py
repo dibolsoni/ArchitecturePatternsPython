@@ -1,5 +1,4 @@
-from datetime import date, timedelta
-
+from datetime import date
 from domain.model.batch import Batch
 from domain.model.order_line import OrderLine
 

@@ -2,7 +2,6 @@ version: "3"
 
 services:
     app:
-        image: python:3.11-slim-buster
         container_name: architecture-patterns-app
         build: .
         depends_on:
@@ -14,7 +13,8 @@ services:
             - DB_PASSWORD=abc123
             - DB_DRIVER=postgresql+psycopg2
         volumes:
-            - .:/code
+            - app:/allocation:/allocation
+            - app:/tests:/tests
         networks:
             - server
         links:
@@ -33,9 +33,12 @@ services:
             - server
         ports:
             - "5432:5432"
+        volumes:
+            - database:/var/lib/postgresql/data
 
 networks:
     server: { }
 
 volumes:
     app:
+    database:

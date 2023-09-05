@@ -1,4 +1,3 @@
-from datetime import date
 from typing import List
 
 from domain.model.batch import Batch
@@ -9,7 +8,7 @@ class OutOfStock(Exception):
 	...
 
 
-def allocation(order_line: OrderLine, batches: List[Batch]) -> Batch:
+def allocate_line(order_line: OrderLine, batches: List[Batch]) -> Batch:
 	try:
 		batch = next(
 			b for b in sorted(batches) if b.can_allocate(order_line)

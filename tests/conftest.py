@@ -1,31 +1,34 @@
 import time
-from datetime import timedelta, date
-from pathlib import Path
-
 import pytest
 import requests
+from datetime import timedelta, date
+from pathlib import Path
 from requests.exceptions import ConnectionError
 from sqlalchemy import create_engine
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import sessionmaker, clear_mappers
-
-from adapters.sql_alchemy_repository.orm import start_mappers, metadata
+from adapters import start_mappers, metadata
 from config import API, DB
 from domain import Batch, OrderLine
 
 
-@pytest.fixture(scope="session")
-def engine():
+@pytest.fixture()
+def in_memory_db():
 	engine = create_engine(DB.URI_TEST, echo=True)
 	metadata.create_all(engine)
 	return engine
 
 
 @pytest.fixture
-def test_session(engine):
+def session_factory(in_memory_db):
 	start_mappers()
-	yield sessionmaker(bind=engine)()
+	yield sessionmaker(bind=in_memory_db)
 	clear_mappers()
+
+
+@pytest.fixture
+def test_session(session_factory):
+	return session_factory()
 
 
 def wait_for_postgres_to_come_up(engine):
@@ -75,6 +78,6 @@ def default_order_lines(test_session) -> list[OrderLine]:
 
 @pytest.fixture
 def restart_api():
-	(Path(__file__).parent / "api.py").touch()
+	(Path(__file__).parent / "../allocation/src/entrypoints/api.py").touch()
 	time.sleep(0.5)
 	wait_for_webapp_to_come_up()

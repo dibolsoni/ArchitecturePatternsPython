@@ -5,4 +5,4 @@ from domain.custom_types import Reference
 
 @dataclass
 class Model(object):
-    reference: Reference
+	reference: Reference
