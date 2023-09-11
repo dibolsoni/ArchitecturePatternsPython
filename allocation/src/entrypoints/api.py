@@ -1,9 +1,9 @@
 from datetime import datetime
 from flask import Flask, request
-from domain.service.allocate_line import OutOfStock
 from service_layer import service, SqlAlchemyUnitOfWork
 from service_layer import InvalidSku
 from adapters import start_mappers
+from domain import OutOfStock
 
 app = Flask(__name__)
 start_mappers()

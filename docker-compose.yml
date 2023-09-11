@@ -13,8 +13,12 @@ services:
             - DB_PASSWORD=abc123
             - DB_DRIVER=postgresql+psycopg2
         volumes:
-            - app:/allocation:/allocation
-            - app:/tests:/tests
+            - type: bind
+              source: ./allocation
+              target: /allocation
+            - type: bind
+              source: ./tests
+              target: /tests
         networks:
             - server
         links:
@@ -33,12 +37,6 @@ services:
             - server
         ports:
             - "5432:5432"
-        volumes:
-            - database:/var/lib/postgresql/data
 
 networks:
     server: { }
-
-volumes:
-    app:
-    database:

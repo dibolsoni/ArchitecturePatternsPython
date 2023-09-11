@@ -15,14 +15,24 @@ down:
 logs:
 	docker-compose logs app | tail -100
 
+down-db:
+	docker-compose down postgres
+
+up-db:
+	docker-compose up -d postgres
+
+tests: unit-tests integration-tests e2e-tests
+
 unit-tests:
-	docker-compose run --rm --no-deps --name unit_tests --entrypoint=pytest app /tests/unit
+	docker-compose run --rm --no-deps --name unit_tests --entrypoint=pytest app /tests/unit -v
 
-integration-tests: up
-	docker-compose run --rm --no-deps --name integration_tests --entrypoint=pytest app /tests/integration
+integration-tests: down-db up-db
+	docker-compose run --rm --no-deps --name integration_tests --entrypoint=pytest app /tests/integration -v
+	$(MAKE) down-db
 
-e2e-tests: up
-	docker-compose run --rm --no-deps --name e2e_tests --entrypoint=pytest app /tests/e2e
+e2e-tests: down-db up-db
+	docker-compose run --rm --no-deps --name e2e_tests --entrypoint=pytest app /tests/e2e -v
+	$(MAKE) down-db
 
 black:
 	black -l 86 $$(find * -name '*.py')

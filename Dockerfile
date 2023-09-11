@@ -15,6 +15,6 @@ COPY ./tests /tests/
 RUN pip install -e ./
 
 ENV FLASK_APP=/allocation/src/entrypoints/api.py FLASK_DEBUG=1 PYTHONUNBUFFERED=1
-CMD flask run --host=0.0.0.0 --port=80
+CMD flask run --host=0.0.0.0 --port=8000
 
 EXPOSE 8000

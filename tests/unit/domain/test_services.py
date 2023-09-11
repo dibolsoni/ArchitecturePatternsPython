@@ -1,67 +1,63 @@
-from dataclasses import dataclass
-
 import pytest
-from adapters import AbstractRepository
-from domain import Reference, Batch
-from service_layer import (allocate, InvalidSku, add_batch, AbstractUnitOfWork)
+
+from adapters import repository
+from service_layer import add_batch, allocate, InvalidSku, AbstractUnitOfWork
 
 
-@dataclass
-class FakeRepository(AbstractRepository):
-	def __init__(self, batches):
-		self._batches = set(batches)
+class FakeRepository(repository.AbstractRepository):
+	def __init__(self, products):
+		self._products = set(products)
 
-	def add(self, batch):
-		self._batches.add(batch)
+	def add(self, product):
+		self._products.add(product)
 
-	def add_all(self, batches: list[Batch]):
-		self._batches.update(set(batches))
-
-	def get(self, reference: Reference) -> Batch:
-		return next(b for b in self._batches if b.reference == reference)
-
-	def list(self):
-		return list(self._batches)
+	def get(self, sku):
+		return next((p for p in self._products if p.sku == sku), None)
 
 
 class FakeUnitOfWork(AbstractUnitOfWork):
 	def __init__(self):
-		self.batches = FakeRepository([])
+		self.products = FakeRepository([])
 		self.committed = False
 
 	def commit(self):
-		self.committed = True
-
-	def flush(self):
 		self.committed = True
 
 	def rollback(self):
 		pass
 
 
-def test_returns_allocation():
+def test_add_batch_for_new_product():
 	uow = FakeUnitOfWork()
-	add_batch('b1', 'COMPLICATED-LAMP', 100, None, uow)
-	result = allocate('o1', 'COMPLICATED-LAMP', 10, uow)
-	assert result == "b1"
+	add_batch("b1", "CRUNCHY-ARMCHAIR", 100, None, uow)
+	assert uow.products.get("CRUNCHY-ARMCHAIR") is not None
+	assert uow.committed
 
 
-def test_error_for_invalid_sku():
+def test_add_batch_for_existing_product():
+	uow = FakeUnitOfWork()
+	add_batch("b1", "GARISH-RUG", 100, None, uow)
+	add_batch("b2", "GARISH-RUG", 99, None, uow)
+	assert "b2" in [b.reference for b in uow.products.get("GARISH-RUG").batches]
+
+
+def test_allocate_returns_allocation():
+	uow = FakeUnitOfWork()
+	add_batch("batch1", "COMPLICATED-LAMP", 100, None, uow)
+	result = allocate("o1", "COMPLICATED-LAMP", 10, uow)
+	assert result == "batch1"
+
+
+def test_allocate_errors_for_invalid_sku():
 	uow = FakeUnitOfWork()
 	add_batch("b1", "AREALSKU", 100, None, uow)
+
 	with pytest.raises(InvalidSku, match="Invalid sku: NONEXISTENTSKU"):
 		allocate("o1", "NONEXISTENTSKU", 10, uow)
 
 
-def test_commits():
+def test_allocate_commits():
 	uow = FakeUnitOfWork()
 	add_batch("b1", "OMINOUS-MIRROR", 100, None, uow)
 	allocate("o1", "OMINOUS-MIRROR", 10, uow)
-	assert uow.committed is True
-
-
-def test_add_batch():
-	uow = FakeUnitOfWork()
-	add_batch('b1', "COMPLICATED-LAMP", 100, None, uow)
-	assert uow.batches.get("b1") is not None
-	assert uow.committed is True
+	assert uow.committed

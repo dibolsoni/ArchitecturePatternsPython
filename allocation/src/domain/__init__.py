@@ -1,7 +1,7 @@
 from domain.model.batch import Batch
 from domain.model.order_line import OrderLine
 from domain.custom_types import Quantity, Reference, Sku
-from domain.service.allocate_line import allocate_line
+from domain.model.product import Product, OutOfStock
 
 __all__ = (
 	'Batch',
@@ -9,5 +9,6 @@ __all__ = (
 	'Quantity',
 	'Reference',
 	'Sku',
-	'allocate_line'
+	'Product',
+	'OutOfStock'
 )

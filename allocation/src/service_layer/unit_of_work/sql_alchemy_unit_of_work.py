@@ -1,10 +1,16 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-import config
-from service_layer.unit_of_work.unit_of_work import AbstractUnitOfWork
-from adapters import SqlAlchemyRepository
 
-DEFAULT_SESSION_FACTORY = sessionmaker(bind=create_engine(config.DB.uri()))
+import config
+from adapters import SqlAlchemyRepository
+from service_layer.unit_of_work.unit_of_work import AbstractUnitOfWork
+
+DEFAULT_SESSION_FACTORY = sessionmaker(
+	bind=create_engine(
+		config.DB.uri(),
+		isolation_level="REPEATABLE READ"
+	)
+)
 
 
 class SqlAlchemyUnitOfWork(AbstractUnitOfWork):
@@ -13,7 +19,7 @@ class SqlAlchemyUnitOfWork(AbstractUnitOfWork):
 
 	def __enter__(self):
 		self.session = self.session_factory()
-		self.batches = SqlAlchemyRepository(self.session)
+		self.products = SqlAlchemyRepository(self.session)
 		return super().__enter__()
 
 	def __exit__(self, exc_type, exc_val, exc_tb):

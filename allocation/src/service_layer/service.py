@@ -1,16 +1,12 @@
 from datetime import date
 from typing import Optional
-from domain import Sku, Batch, OrderLine, Reference, Quantity
-from domain.service import allocate_line
+
+from domain import Sku, Batch, OrderLine, Reference, Quantity, Product
 from service_layer.unit_of_work.unit_of_work import AbstractUnitOfWork
 
 
 class InvalidSku(Exception):
 	pass
-
-
-def is_valid_sku(sku: Sku, batches: [Batch]) -> bool:
-	return sku in [b.sku for b in batches]
 
 
 def allocate(
@@ -19,10 +15,10 @@ def allocate(
 ) -> Reference:
 	order_line = OrderLine(reference=reference, sku=sku, quantity=quantity)
 	with uow:
-		batches = uow.batches.list()
-		if not is_valid_sku(order_line.sku, batches):
+		product = uow.products.get(sku=sku)
+		if product is None:
 			raise InvalidSku(f'Invalid sku: {order_line.sku}')
-		batchref = allocate_line(order_line, batches).reference
+		batchref = product.allocate(order_line)
 		uow.commit()
 	return batchref
 
@@ -32,5 +28,9 @@ def add_batch(
 	uow: AbstractUnitOfWork
 ) -> None:
 	with uow:
-		uow.batches.add(Batch(reference=reference, sku=sku, quantity=quantity, eta=eta))
+		product = uow.products.get(sku=sku)
+		if product is None:
+			product = Product(sku=sku, batches=set())
+			uow.products.add(product=product)
+		product.batches.add(Batch(reference=reference, sku=sku, quantity=quantity, eta=eta))
 		uow.commit()
