@@ -1,24 +1,33 @@
 version: "3"
 
+
 services:
     app:
         container_name: architecture-patterns-app
         build: .
+        image: app
         depends_on:
-            - postgres
+            postgres:
+                condition: service_healthy
+        healthcheck:
+            test: curl -f http://app:8000 || exit 1
+            interval: 5s
+            timeout: 5s
+            retries: 5
         environment:
             - DB_HOST=postgres
             - DB_PORT=5432
-            - DB_USER=allocation
-            - DB_PASSWORD=abc123
+            - DB_USER=${POSTGRES_USER}
+            - DB_PASSWORD=${POSTGRES_PASSWORD}
             - DB_DRIVER=postgresql+psycopg2
+            - PYTHONDONTWRITEBYTECODE=1
         volumes:
-            - type: bind
-              source: ./allocation
-              target: /allocation
-            - type: bind
-              source: ./tests
-              target: /tests
+            -   type: bind
+                source: ./allocation
+                target: /allocation
+            -   type: bind
+                source: ./tests
+                target: /tests
         networks:
             - server
         links:
@@ -26,17 +35,52 @@ services:
         ports:
             - "8000:8000"
 
+
     postgres:
         image: postgres:15.4
         container_name: architecture-patterns-db
         environment:
-            - POSTGRES_USER=allocation
-            - POSTGRES_PASSWORD=abc123
-            - POSTGRES_DB=warehouse
+            - POSTGRES_USER=${POSTGRES_USER}
+            - POSTGRES_DB=${POSTGRES_DB}
+            - POSTGRES_HOST_AUTH_METHOD=trust
         networks:
             - server
         ports:
             - "5432:5432"
+        healthcheck:
+            test: [ "CMD-SHELL", "sh -c 'pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}'" ]
+            interval: 5s
+            timeout: 5s
+            retries: 5
+
+
+
+    tests:
+        container_name: architecture-patterns-tests
+        build: .
+        depends_on:
+            app:
+                condition: service_healthy
+        entrypoint: pytest /tests -v
+        volumes:
+            -   type: bind
+                source: ./allocation
+                target: /allocation
+            -   type: bind
+                source: ./tests
+                target: /tests
+        networks:
+            - server
+        environment:
+            - DB_HOST=postgres
+            - DB_PORT=5432
+            - DB_USER=allocation
+            - DB_PASSWORD=abc123
+            - DB_DRIVER=postgresql+psycopg2
+            - API_HOST=http://app
+            - API_PORT=8000
+            - PYTHONUNBUFFERED=1
+
 
 networks:
     server: { }

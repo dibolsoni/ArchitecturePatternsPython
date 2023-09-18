@@ -8,6 +8,8 @@ WORKDIR /allocation
 COPY requirements.txt requirements.txt
 RUN pip install  -r requirements.txt
 
+RUN apt update && apt -y install curl
+
 COPY allocation/ .
 
 COPY ./tests /tests/

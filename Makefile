@@ -1,5 +1,6 @@
 export COMPOSE_DOCKER_CLI_BUILD = 1
 export DOCKER_BUILDKIT = 1
+include .env
 
 all: down build unit-tests integration-tests e2e-tests
 
@@ -10,29 +11,24 @@ up:
 	docker-compose  up -d app
 
 down:
-	docker-compose down
+	docker-compose down -v --remove-orphans
 
 logs:
 	docker-compose logs app | tail -100
 
-down-db:
-	docker-compose down postgres
-
-up-db:
-	docker-compose up -d postgres
-
-tests: unit-tests integration-tests e2e-tests
+test: unit-tests integration-tests e2e-tests
 
 unit-tests:
-	docker-compose run --rm --no-deps --name unit_tests --entrypoint=pytest app /tests/unit -v
+	docker-compose run --rm --name unit_tests --entrypoint="pytest /tests/unit -v" tests
 
-integration-tests: down-db up-db
-	docker-compose run --rm --no-deps --name integration_tests --entrypoint=pytest app /tests/integration -v
-	$(MAKE) down-db
+integration-tests: restart-db
+	docker-compose run --rm --no-deps --name integration_tests --entrypoint="pytest /tests/integration -v" tests
 
-e2e-tests: down-db up-db
-	docker-compose run --rm --no-deps --name e2e_tests --entrypoint=pytest app /tests/e2e -v
-	$(MAKE) down-db
+e2e-tests: restart-db
+	docker-compose run --rm --name e2e-tests --entrypoint="pytest /tests/e2e -v" tests
+
+restart-db:
+	-docker container restart architecture-patterns-db
 
 black:
 	black -l 86 $$(find * -name '*.py')

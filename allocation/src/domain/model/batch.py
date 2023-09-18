@@ -1,7 +1,7 @@
 from datetime import date
 from typing import Optional
 
-from domain.custom_types import Quantity, Reference, Sku
+from domain.model.custom_types import Quantity, Reference, Sku
 from domain.model.model import Model
 from domain.model.order_line import OrderLine
 

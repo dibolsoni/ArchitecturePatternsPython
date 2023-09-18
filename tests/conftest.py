@@ -17,7 +17,7 @@ from domain import Batch, OrderLine
 
 @pytest.fixture()
 def in_memory_db():
-	engine = create_engine(DB.URI_TEST, echo=True, isolation_level="READ UNCOMMITTED")
+	engine = create_engine(DB.URI_TEST)
 	metadata.create_all(engine)
 	return engine
 
