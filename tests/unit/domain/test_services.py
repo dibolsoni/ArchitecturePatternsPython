@@ -1,10 +1,9 @@
 import pytest
-
-from adapters import repository
+from adapters.repository import TrackingRepository
 from service_layer import add_batch, allocate, InvalidSku, AbstractUnitOfWork
 
 
-class FakeRepository(repository.AbstractRepository):
+class FakeRepository:
 	def __init__(self, products):
 		self._products = set(products)
 
@@ -17,10 +16,10 @@ class FakeRepository(repository.AbstractRepository):
 
 class FakeUnitOfWork(AbstractUnitOfWork):
 	def __init__(self):
-		self.products = FakeRepository([])
+		self.products = TrackingRepository(FakeRepository([]))
 		self.committed = False
 
-	def commit(self):
+	def _commit(self):
 		self.committed = True
 
 	def rollback(self):

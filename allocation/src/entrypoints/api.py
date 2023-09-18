@@ -22,7 +22,7 @@ def allocate():
 	uow = SqlAlchemyUnitOfWork()
 	try:
 		batchref = service.allocate(reference=reference, sku=sku, quantity=quantity, uow=uow)
-	except (OutOfStock, InvalidSku) as e:
+	except InvalidSku as e:
 		return {'message': str(e)}, 400
 	return {'reference': batchref}, 201
 

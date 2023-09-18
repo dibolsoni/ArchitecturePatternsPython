@@ -16,8 +16,8 @@ A multi-region order allocator to batches of stock.
 - [x] High and Low Gear TDD
 - [x] Unit of Work Pattern
 - [x] Aggregates Pattern
-- [ ] Events Pattern
-- [ ] Message Bus
+- [x] Events and the Message Bus Pattern
+- [ ] Going to Town on the Message Bus
 - [ ] Command handler
 - [ ] Event-Driven Architecture
 - [ ] Command-Query Responsibility Segregation (CQRS)

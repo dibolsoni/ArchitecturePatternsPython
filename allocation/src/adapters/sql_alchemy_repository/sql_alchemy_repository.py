@@ -5,6 +5,7 @@ from domain import Sku, Product
 
 
 class SqlAlchemyRepository(AbstractRepository):
+
 	def __init__(self, session: Session):
 		self.session = session
 

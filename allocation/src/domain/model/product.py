@@ -1,22 +1,24 @@
+from typing import Optional
+
 from domain import Sku, Batch, OrderLine, Reference
-
-
-class OutOfStock(Exception):
-	...
+from domain.event.event import Event
+from domain.event.out_of_stock import OutOfStock
 
 
 class Product:
 
-	def __init__(self, sku: Sku, batches: set[Batch], version_number: int = 0):
+	def __init__(self, sku: Sku, batches: list[Batch], version_number: int = 0):
 		self.sku: Sku = sku
-		self.batches: set[Batch] = batches
+		self.batches: list[Batch] = batches
 		self.version_number = version_number
+		self.events: list[Event] = []
 
-	def allocate(self, line: OrderLine) -> Reference:
+	def allocate(self, line: OrderLine) -> Optional[Reference]:
 		try:
 			batch = next(b for b in sorted(self.batches) if b.can_allocate(line))
 			batch.allocate(line=line)
 			self.version_number += 1
 			return batch.reference
 		except StopIteration:
-			raise OutOfStock(f'Out of stock for sku {line.sku}')
+			self.events.append(OutOfStock(sku=line.sku))
+			return None

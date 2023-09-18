@@ -1,7 +1,8 @@
 from domain.model.batch import Batch
 from domain.model.order_line import OrderLine
-from domain.custom_types import Quantity, Reference, Sku
-from domain.model.product import Product, OutOfStock
+from domain.model.custom_types import Quantity, Reference, Sku
+from domain.model.product import Product
+from domain.event import Event, OutOfStock
 
 __all__ = (
 	'Batch',
@@ -10,5 +11,6 @@ __all__ = (
 	'Reference',
 	'Sku',
 	'Product',
+	'Event',
 	'OutOfStock'
 )

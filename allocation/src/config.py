@@ -5,7 +5,7 @@ ENV = config('ENV', default='test')
 
 class DB:
 	URI_TEST = config('DB_URI_TEST', default='sqlite:///:memory:')
-	DRIVER = config('DB_DRIVER', default='postgresql+psycopg2')
+	DRIVER = config('DB_DRIVER', default='postgresql')
 	NAME = config('DB_NAME', default='warehouse')
 	# HOST = config('DB_HOST', default='postgres')
 	HOST = config('DB_HOST', default='localhost')
@@ -15,7 +15,7 @@ class DB:
 
 	@classmethod
 	def uri(cls) -> str:
-		return f'{cls.DRIVER}://{cls.USER}:{cls.PASSWORD}@{cls.HOST}/{cls.NAME}'
+		return f'{cls.DRIVER}://{cls.USER}:{cls.PASSWORD}@{cls.HOST}:{cls.PORT}/{cls.NAME}'
 
 
 class API:

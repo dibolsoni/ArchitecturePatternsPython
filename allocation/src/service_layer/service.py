@@ -30,7 +30,7 @@ def add_batch(
 	with uow:
 		product = uow.products.get(sku=sku)
 		if product is None:
-			product = Product(sku=sku, batches=set())
+			product = Product(sku=sku, batches=[])
 			uow.products.add(product=product)
-		product.batches.add(Batch(reference=reference, sku=sku, quantity=quantity, eta=eta))
+		product.batches.append(Batch(reference=reference, sku=sku, quantity=quantity, eta=eta))
 		uow.commit()
