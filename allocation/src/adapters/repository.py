@@ -1,6 +1,6 @@
 from typing import Protocol, Set
 
-from domain import Sku, Product
+from domain import Sku, Product, Reference, Batch
 
 
 class AbstractRepository(Protocol):
@@ -8,6 +8,9 @@ class AbstractRepository(Protocol):
 		...
 
 	def get(self, sku: Sku) -> Product:
+		...
+
+	def get_by_batchref(self, batchref: Reference) -> Product:
 		...
 
 
@@ -24,5 +27,12 @@ class TrackingRepository:
 
 	def get(self, sku: Sku) -> Product:
 		product = self._repo.get(sku=sku)
-		self.seen.add(product)
+		if product:
+			self.seen.add(product)
+		return product
+
+	def get_by_batchref(self, batchref: Reference) -> Product:
+		product = self._repo.get_by_batchref(batchref=batchref)
+		if product:
+			self.seen.add(product)
 		return product

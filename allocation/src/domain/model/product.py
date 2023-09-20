@@ -1,6 +1,7 @@
 from typing import Optional
 
-from domain import Sku, Batch, OrderLine, Reference
+from domain import Sku, Batch, OrderLine, Reference, Quantity
+from domain.event.allocation_required import AllocationRequired
 from domain.event.event import Event
 from domain.event.out_of_stock import OutOfStock
 
@@ -22,3 +23,12 @@ class Product:
 		except StopIteration:
 			self.events.append(OutOfStock(sku=line.sku))
 			return None
+
+	def change_batch_quantity(self, reference: Reference, quantity: Quantity):
+		batch = next(b for b in self.batches if b.reference == reference)
+		batch.change_purchased_quantity(quantity=quantity)
+		while batch.available_quantity < 0:
+			line = batch.deallocate_smallest()
+			self.events.append(
+				AllocationRequired(reference=line.reference, sku=line.sku, quantity=line.quantity)
+			)

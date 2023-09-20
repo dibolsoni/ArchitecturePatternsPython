@@ -16,11 +16,11 @@ class Batch(Model):
 
 	@property
 	def allocated_quantity(self) -> Quantity:
-		return sum(order_line.quantity for order_line in self._allocations)
+		return Quantity(sum(order_line.quantity for order_line in self._allocations))
 
 	@property
 	def available_quantity(self) -> Quantity:
-		return self._purchased_quantity - self.allocated_quantity
+		return Quantity(self._purchased_quantity - self.allocated_quantity)
 
 	def __eq__(self, other):
 		if not isinstance(other, Batch):
@@ -64,3 +64,11 @@ class Batch(Model):
 			"sku": self.sku,
 			"eta": self.eta,
 		}
+
+	def change_purchased_quantity(self, quantity: Quantity):
+		self._purchased_quantity = quantity
+
+	def deallocate_smallest(self) -> OrderLine:
+		smallest_sorted = sorted(self._allocations, key=lambda x: x.quantity)
+		self._allocations.remove(smallest_sorted[0])
+		return smallest_sorted[0]
