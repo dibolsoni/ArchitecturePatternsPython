@@ -12,7 +12,7 @@ from sqlalchemy.orm import sessionmaker, clear_mappers
 import config
 from adapters import start_mappers, metadata
 from config import API, DB
-from domain import Batch, OrderLine
+from domain.model import Batch, OrderLine
 
 
 @pytest.fixture()

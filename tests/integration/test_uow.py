@@ -4,7 +4,7 @@ import traceback
 
 import pytest
 
-from domain import OrderLine, Quantity, Sku, Reference
+from domain.model import OrderLine, Quantity, Sku, Reference
 from service_layer import SqlAlchemyUnitOfWork
 
 

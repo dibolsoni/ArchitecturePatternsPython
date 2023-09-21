@@ -1,13 +1,12 @@
-from typing import Callable, Dict, Type
+from asyncio.log import logger
+from typing import Callable, Dict, Type, Union
+from tenacity import Retrying, RetryError, stop_after_attempt, wait_exponential
 
 from adapters import send_email
-from domain import Event, OutOfStock
-from domain.event.allocation_required import AllocationRequired
-from domain.event.batch_created import BatchCreated
-from domain.event.batch_quantity_changed import BatchQuantityChanged
-from service_layer import allocate, add_batch
-from service_layer.handlers import change_purchased_quantity
-from service_layer.unit_of_work.unit_of_work import AbstractUnitOfWork
+from domain.model import Reference
+from domain.event import Event, OutOfStock
+from domain.command import Command, Allocate, ChangeBatchQuantity, CreateBatch
+from service_layer import allocate, add_batch, change_batch_quantity, AbstractUnitOfWork
 
 
 def send_out_of_stock_notification(
@@ -20,25 +19,63 @@ def send_out_of_stock_notification(
 	)
 
 
+Message = Union[Command, Event]
+
+
 class AbstractMessageBus:
-	HANDLERS: Dict[Type[Event], list[callable]]
+	COMMAND_HANDLER: Dict[Type[Command], callable]
+	EVENT_HANDLERS: Dict[Type[Event], list[callable]]
 
 	@classmethod
-	def handle(cls, event: Event, uow: AbstractUnitOfWork) -> list:
+	def handle(cls, message: Message, uow: AbstractUnitOfWork) -> list:
 		results = []
-		queue = [event]
+		queue = [message]
 		while queue:
-			event = queue.pop(0)
-			for handler in cls.HANDLERS[type(event)]:
-				results.append(handler(event=event, uow=uow))
-				queue.extend(uow.collect_new_events())
+			message = queue.pop(0)
+			if isinstance(message, Event):
+				cls.handle_event(message, queue, uow)
+			elif isinstance(message, Command):
+				cmd_result = cls.handle_command(message, queue, uow)
+				results.append(cmd_result)
 		return results
+
+	@classmethod
+	def handle_event(cls, event: Event, queue: list[Message], uow: AbstractUnitOfWork):
+		for handler in cls.EVENT_HANDLERS[type(event)]:
+			try:
+				for attempt in Retrying(
+					stop=stop_after_attempt(3),
+					wait=wait_exponential()
+				):
+					with attempt:
+						logger.debug(f'handling event [{event}] with handler [{handler}]')
+						handler(event, uow)
+						queue.extend(uow.collect_new_events())
+			except RetryError as retry_failure:
+				times = retry_failure.last_attempt.attempt_number
+				logger.exception(f'Failed to handle event {times} times, giving up!')
+				continue
+
+	@classmethod
+	def handle_command(cls, command: Command, queue: list[Message], uow: AbstractUnitOfWork) -> Reference:
+		logger.debug(f'handling command {command}')
+		try:
+			handler = cls.COMMAND_HANDLER[type(command)]
+			result = handler(command, uow=uow)
+			queue.extend(uow.collect_new_events())
+			return result
+		except Exception:
+			logger.exception(f'Exception handling command: {command}')
+			raise
 
 
 class MessageBus(AbstractMessageBus):
-	HANDLERS: Dict[Type[Event], list[Callable]] = {
+	EVENT_HANDLERS: Dict[Type[Event], list[Callable]] = {
 		OutOfStock: [send_out_of_stock_notification],
-		BatchCreated: [add_batch],
-		AllocationRequired: [allocate],
-		BatchQuantityChanged: [change_purchased_quantity]
 	}
+	COMMAND_HANDLER: Dict[Type[Event], callable] = {
+		Allocate: allocate,
+		CreateBatch: add_batch,
+		ChangeBatchQuantity: change_batch_quantity
+	}
+

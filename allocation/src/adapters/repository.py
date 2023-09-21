@@ -1,6 +1,6 @@
 from typing import Protocol, Set
 
-from domain import Sku, Product, Reference, Batch
+from domain.model import Sku, Product, Reference
 
 
 class AbstractRepository(Protocol):

@@ -1,6 +1,6 @@
 from sqlalchemy import Table, Column, String, Integer, MetaData, Date, ForeignKey
 from sqlalchemy.orm import mapper, relationship
-from domain import Batch, Product
+from domain.model import Batch, Product
 from domain.model.order_line import OrderLine
 
 

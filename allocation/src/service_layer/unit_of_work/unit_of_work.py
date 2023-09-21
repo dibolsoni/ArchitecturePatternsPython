@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from adapters.repository import TrackingRepository
-from domain import Event
+from domain.event import Event
 
 
 class AbstractUnitOfWork(ABC):

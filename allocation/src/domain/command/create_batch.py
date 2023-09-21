@@ -1,11 +1,14 @@
 from dataclasses import dataclass
+from datetime import date
+from typing import Optional
 
 from domain.model.custom_types import Sku, Quantity
-from domain.event.event import Event
+from domain.command.command import Command
 from domain.model.model import Model
 
 
 @dataclass
-class AllocationRequired(Model, Event):
+class CreateBatch(Model, Command):
 	sku: Sku
 	quantity: Quantity
+	eta: Optional[date] = None

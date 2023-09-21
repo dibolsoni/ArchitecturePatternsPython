@@ -1,8 +1,10 @@
 pytest~=7.4.0
-sqlalchemy~=1.4.39
+sqlalchemy~=1.4.49
 requests~=2.31.0
 uvicorn~=0.23.2
 jsonify~=0.5
 python-decouple~=3.8
 psycopg2-binary~=2.9.7
 Flask~=2.3.3
+tenacity~=8.2.3
+setuptools~=65.5.1

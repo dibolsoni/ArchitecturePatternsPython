@@ -1,9 +1,11 @@
 from typing import Optional
 
-from domain import Sku, Batch, OrderLine, Reference, Quantity
-from domain.event.allocation_required import AllocationRequired
-from domain.event.event import Event
-from domain.event.out_of_stock import OutOfStock
+from domain.command import Allocate
+from domain.event import OutOfStock
+from domain.message import Message
+from domain.model.batch import Batch
+from domain.model.custom_types import Sku, Reference, Quantity
+from domain.model.order_line import OrderLine
 
 
 class Product:
@@ -12,7 +14,7 @@ class Product:
 		self.sku: Sku = sku
 		self.batches: list[Batch] = batches
 		self.version_number = version_number
-		self.events: list[Event] = []
+		self.events: list[Message] = []
 
 	def allocate(self, line: OrderLine) -> Optional[Reference]:
 		try:
@@ -30,5 +32,5 @@ class Product:
 		while batch.available_quantity < 0:
 			line = batch.deallocate_smallest()
 			self.events.append(
-				AllocationRequired(reference=line.reference, sku=line.sku, quantity=line.quantity)
+				Allocate(reference=line.reference, sku=line.sku, quantity=line.quantity)
 			)

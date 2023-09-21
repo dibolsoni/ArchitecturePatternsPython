@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 
 from adapters import AbstractRepository
-from domain import Sku, Product, Reference, Batch
+from domain.model import Sku, Product, Reference
 
 
 class SqlAlchemyRepository(AbstractRepository):

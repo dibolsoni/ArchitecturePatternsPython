@@ -1,12 +1,7 @@
 from datetime import date, timedelta
 
-import pytest
-
-# from domain.model.product import Product, OutOfStock
-# from domain.model.batch import Batch
-# from domain.model.order_line import OrderLine
-
-from domain import Product, OutOfStock, Batch, OrderLine
+from domain.model import Product, Batch, OrderLine
+from domain.event import OutOfStock
 
 today = date.today()
 tomorrow = today + timedelta(days=1)
@@ -52,11 +47,11 @@ def test_records_out_of_stock_event_if_cannot_allocate():
 	assert allocation is None
 
 
-# def test_increments_version_number():
-# 	line = OrderLine("oref", "SCANDI-PEN", 10)
-# 	product = Product(
-# 		sku="SCANDI-PEN", batches=[Batch("b1", "SCANDI-PEN", 100, eta=None)]
-# 	)
-# 	product.version_number = 7
-# 	product.allocate(line)
-# 	assert product.version_number == 8
+def test_increments_version_number():
+	line = OrderLine("oref", "SCANDI-PEN", 10)
+	product = Product(
+		sku="SCANDI-PEN", batches=[Batch("b1", "SCANDI-PEN", 100, eta=None)]
+	)
+	product.version_number = 7
+	product.allocate(line)
+	assert product.version_number == 8
