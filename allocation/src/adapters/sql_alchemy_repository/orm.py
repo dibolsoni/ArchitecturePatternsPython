@@ -1,4 +1,4 @@
-from sqlalchemy import Table, Column, String, Integer, MetaData, Date, ForeignKey
+from sqlalchemy import Table, Column, String, Integer, MetaData, Date, ForeignKey, event
 from sqlalchemy.orm import mapper, relationship
 from domain.model import Batch, Product
 from domain.model.order_line import OrderLine
@@ -57,3 +57,8 @@ def start_mappers():
 		product,
 		properties={"batches": relationship(batch_mapper)}
 	)
+
+
+@event.listens_for(Product, "load")
+def receive_load(p, _):
+	p.events = []

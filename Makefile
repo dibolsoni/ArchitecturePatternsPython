@@ -14,7 +14,7 @@ down:
 	docker-compose down -v --remove-orphans
 
 logs:
-	docker-compose logs app | tail -100
+	docker-compose logs --tail=25 api redis_pubsub
 
 test: unit-tests integration-tests e2e-tests
 

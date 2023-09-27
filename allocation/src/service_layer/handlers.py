@@ -1,5 +1,9 @@
-from domain.model import Batch, OrderLine, Reference, Product
+from adapters.email.email import send_email
+from adapters.redis.event_publisher import publish
 from domain.command import Allocate, CreateBatch, ChangeBatchQuantity
+from domain.event import OutOfStock
+from domain.event.allocated import Allocated
+from domain.model import Batch, OrderLine, Reference, Product
 from service_layer.unit_of_work.unit_of_work import AbstractUnitOfWork
 
 
@@ -46,3 +50,19 @@ def change_batch_quantity(command: ChangeBatchQuantity, uow: AbstractUnitOfWork)
 		product = uow.products.get_by_batchref(batchref=command.reference)
 		product.change_batch_quantity(command.reference, command.quantity)
 		uow.commit()
+
+
+def send_out_of_stock_notification(
+	event: OutOfStock,
+	uow: AbstractUnitOfWork
+):
+	send_email(
+		'stock@made.com',
+		f'Out of stock {event.sku}'
+	)
+
+
+def publish_allocated_event(
+	event: Allocated, uow: AbstractUnitOfWork
+):
+	publish('line_allocated', event)

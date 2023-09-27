@@ -19,7 +19,7 @@ A multi-region order allocator to batches of stock.
 - [x] Events and the Message Bus Pattern
 - [x] Going to Town on the Message Bus
 - [x] Command handler
-- [ ] Event-Driven Architecture
+- [x] Event-Driven Architecture
 - [ ] Command-Query Responsibility Segregation (CQRS)
 - [ ] Dependency Injection and Bootstrapping
 

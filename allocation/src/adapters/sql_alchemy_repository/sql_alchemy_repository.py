@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 
 from adapters import AbstractRepository
-from domain.model import Sku, Product, Reference
+from domain.model import Sku, Product, Reference, Batch
 
 
 class SqlAlchemyRepository(AbstractRepository):
@@ -16,4 +16,10 @@ class SqlAlchemyRepository(AbstractRepository):
 		return self.session.query(Product).filter_by(sku=sku).first()
 
 	def get_by_batchref(self, batchref: Reference) -> Product:
-		return self.session.query(Product).filter_by(reference=batchref).one()
+		return (
+			self.session
+			.query(Product)
+			.join(Batch)
+			.filter(Batch.reference == batchref)
+			.one()
+		)

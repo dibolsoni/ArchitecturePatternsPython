@@ -17,10 +17,18 @@ class Product:
 		self.events: list[Message] = []
 
 	def allocate(self, line: OrderLine) -> Optional[Reference]:
+		from domain.event.allocated import Allocated
+
 		try:
 			batch = next(b for b in sorted(self.batches) if b.can_allocate(line))
 			batch.allocate(line=line)
 			self.version_number += 1
+			self.events.append(Allocated(
+				orderid=line.reference,
+				sku=line.sku,
+				quantity=line.quantity,
+				batchref=batch.reference
+			))
 			return batch.reference
 		except StopIteration:
 			self.events.append(OutOfStock(sku=line.sku))

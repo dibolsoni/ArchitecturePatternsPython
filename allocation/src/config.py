@@ -7,7 +7,6 @@ class DB:
 	URI_TEST = config('DB_URI_TEST', default='sqlite:///:memory:')
 	DRIVER = config('DB_DRIVER', default='postgresql')
 	NAME = config('DB_NAME', default='warehouse')
-	# HOST = config('DB_HOST', default='postgres')
 	HOST = config('DB_HOST', default='localhost')
 	PORT = config('DB_PORT', default=5432)
 	USER = config('DB_USER', default='allocation')
@@ -25,3 +24,12 @@ class API:
 	@classmethod
 	def url(cls) -> str:
 		return f'{cls.HOST}:{cls.PORT}'
+
+
+class REDIS:
+	HOST = config("REDIS_HOST", "localhost")
+	PORT = config("REDIS_PORT", "6379")
+
+	@classmethod
+	def host_and_port(cls) -> dict:
+		return dict(host=cls.HOST, port=cls.PORT, decode_responses=True)

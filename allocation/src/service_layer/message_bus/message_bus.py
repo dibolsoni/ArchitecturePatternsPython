@@ -1,23 +1,14 @@
-from asyncio.log import logger
+import logging
 from typing import Callable, Dict, Type, Union
-from tenacity import Retrying, RetryError, stop_after_attempt, wait_exponential
 
-from adapters import send_email
-from domain.model import Reference
-from domain.event import Event, OutOfStock
 from domain.command import Command, Allocate, ChangeBatchQuantity, CreateBatch
+from domain.event import Event, OutOfStock
+from domain.event.allocated import Allocated
+from domain.model import Reference
 from service_layer import allocate, add_batch, change_batch_quantity, AbstractUnitOfWork
+from service_layer.handlers import send_out_of_stock_notification, publish_allocated_event
 
-
-def send_out_of_stock_notification(
-	event: OutOfStock,
-	uow: AbstractUnitOfWork
-):
-	send_email(
-		'stock@made.com',
-		f'Out of stock {event.sku}'
-	)
-
+logger = logging.getLogger(__name__)
 
 Message = Union[Command, Event]
 
@@ -43,18 +34,11 @@ class AbstractMessageBus:
 	def handle_event(cls, event: Event, queue: list[Message], uow: AbstractUnitOfWork):
 		for handler in cls.EVENT_HANDLERS[type(event)]:
 			try:
-				for attempt in Retrying(
-					stop=stop_after_attempt(3),
-					wait=wait_exponential()
-				):
-					with attempt:
-						logger.debug(f'handling event [{event}] with handler [{handler}]')
-						handler(event, uow)
-						queue.extend(uow.collect_new_events())
-			except RetryError as retry_failure:
-				times = retry_failure.last_attempt.attempt_number
-				logger.exception(f'Failed to handle event {times} times, giving up!')
-				continue
+				logger.debug("handling event %s with handler %s", event, handler)
+				handler(event, uow=uow)
+				queue.extend(uow.collect_new_events())
+			except Exception:
+				logger.exception(f'Exception handling event: {event}')
 
 	@classmethod
 	def handle_command(cls, command: Command, queue: list[Message], uow: AbstractUnitOfWork) -> Reference:
@@ -72,10 +56,10 @@ class AbstractMessageBus:
 class MessageBus(AbstractMessageBus):
 	EVENT_HANDLERS: Dict[Type[Event], list[Callable]] = {
 		OutOfStock: [send_out_of_stock_notification],
+		Allocated: [publish_allocated_event]
 	}
 	COMMAND_HANDLER: Dict[Type[Event], callable] = {
 		Allocate: allocate,
 		CreateBatch: add_batch,
 		ChangeBatchQuantity: change_batch_quantity
 	}
-

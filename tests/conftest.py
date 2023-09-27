@@ -3,21 +3,21 @@ from datetime import timedelta, date
 from pathlib import Path
 
 import pytest
+import redis
 import requests
-from requests.exceptions import ConnectionError
 from sqlalchemy import create_engine
-from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import sessionmaker, clear_mappers
+from tenacity import stop_after_delay, retry
 
 import config
 from adapters import start_mappers, metadata
-from config import API, DB
+from config import DB
 from domain.model import Batch, OrderLine
 
 
 @pytest.fixture()
 def in_memory_db():
-	engine = create_engine(DB.URI_TEST)
+	engine = create_engine(DB.URI_TEST, echo=True)
 	metadata.create_all(engine)
 	return engine
 
@@ -34,25 +34,14 @@ def test_session(session_factory):
 	return session_factory()
 
 
+@retry(stop=stop_after_delay(10))
 def wait_for_postgres_to_come_up(engine):
-	deadline = time.time() + 10
-	while time.time() < deadline:
-		try:
-			return engine.connect()
-		except OperationalError:
-			time.sleep(0.5)
-	pytest.fail("Postgres never came up")
+	engine.connect()
 
 
+@retry(stop=stop_after_delay(10))
 def wait_for_webapp_to_come_up():
-	deadline = time.time() + 10
-	url = API.url()
-	while time.time() < deadline:
-		try:
-			return requests.get(url)
-		except ConnectionError:
-			time.sleep(0.5)
-	pytest.fail('API never came up')
+	requests.get(config.API.url())
 
 
 @pytest.fixture
@@ -104,3 +93,14 @@ def restart_api():
 	(Path(__file__).parent / "../allocation/src/entrypoints/api.py").touch()
 	time.sleep(0.5)
 	wait_for_webapp_to_come_up()
+
+
+@retry(stop=stop_after_delay(10))
+def wait_for_redis_to_come_up():
+	r = redis.Redis(**config.REDIS.host_and_port())
+	return r.ping()
+
+
+@pytest.fixture
+def restart_redis_pubsub():
+	wait_for_redis_to_come_up()

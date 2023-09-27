@@ -7,6 +7,8 @@ services:
         build: .
         image: app
         depends_on:
+            redis_pubsub:
+                condition: service_started
             postgres:
                 condition: service_healthy
         healthcheck:
@@ -17,9 +19,10 @@ services:
         environment:
             - DB_HOST=postgres
             - DB_PORT=5432
-            - DB_USER=${POSTGRES_USER}
-            - DB_PASSWORD=${POSTGRES_PASSWORD}
+            - DB_PASSWORD=abc123
             - DB_DRIVER=postgresql+psycopg2
+            - REDIS_HOST=redis
+            - API_HOST=api
             - PYTHONDONTWRITEBYTECODE=1
         volumes:
             -   type: bind
@@ -40,9 +43,9 @@ services:
         image: postgres:15.4
         container_name: architecture-patterns-db
         environment:
-            - POSTGRES_USER=${POSTGRES_USER}
-            - POSTGRES_DB=${POSTGRES_DB}
-            - POSTGRES_HOST_AUTH_METHOD=trust
+            - POSTGRES_USER=allocation
+            - POSTGRES_PASSWORD=abc123
+            - POSTGRES_DB=warehouse
         networks:
             - server
         ports:
@@ -74,13 +77,44 @@ services:
         environment:
             - DB_HOST=postgres
             - DB_PORT=5432
-            - DB_USER=allocation
             - DB_PASSWORD=abc123
-            - DB_DRIVER=postgresql+psycopg2
+            - REDIS_HOST=redis
             - API_HOST=http://app
             - API_PORT=8000
             - PYTHONUNBUFFERED=1
 
 
+    redis_pubsub:
+        build: .
+        image: allocation-image
+        container_name: redis_pubsub
+        depends_on:
+            - postgres
+            - redis
+        networks:
+            - server
+        environment:
+            - DB_HOST=postgres
+            - DB_PASSWORD=abc123
+            - REDIS_HOST=redis
+            - PYTHONDONTWRITEBYTECODE=1
+        volumes:
+            -   type: bind
+                source: ./allocation
+                target: /allocation
+            -   type: bind
+                source: ./tests
+                target: /tests
+        entrypoint:
+            - python
+            - /allocation/src/entrypoints/redis_eventconsumer.py
+
+    redis:
+        image: redis:alpine
+        container_name: redis
+        networks:
+            - server
+        ports:
+            - "6379:6379"
 networks:
     server: { }

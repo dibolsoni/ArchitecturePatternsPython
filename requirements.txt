@@ -8,3 +8,4 @@ psycopg2-binary~=2.9.7
 Flask~=2.3.3
 tenacity~=8.2.3
 setuptools~=65.5.1
+redis~=5.0.0
