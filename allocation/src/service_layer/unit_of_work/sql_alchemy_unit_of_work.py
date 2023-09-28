@@ -2,8 +2,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 import config
-from adapters import SqlAlchemyRepository
-from adapters.repository import TrackingRepository
+from adapters.repository import TrackingRepository, SqlAlchemyRepository
 from service_layer.unit_of_work.unit_of_work import AbstractUnitOfWork
 
 DEFAULT_SESSION_FACTORY = sessionmaker(

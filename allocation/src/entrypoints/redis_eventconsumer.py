@@ -4,7 +4,7 @@ import logging
 import redis
 
 import config
-from adapters.sql_alchemy_repository import orm
+from adapters.repository import orm
 from domain.command import ChangeBatchQuantity
 from service_layer import MessageBus, SqlAlchemyUnitOfWork
 

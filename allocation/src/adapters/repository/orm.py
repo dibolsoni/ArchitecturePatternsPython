@@ -42,6 +42,14 @@ allocation = Table(
 	Column('batch_id', ForeignKey('batch.id'))
 )
 
+allocations_view = Table(
+	'allocations_view',
+	metadata,
+	Column('order_line_id', String(255)),
+	Column('sku', String(255)),
+	Column('batch_reference', String(255))
+)
+
 
 def start_mappers():
 	order_line_mapper = mapper(OrderLine, order_line)

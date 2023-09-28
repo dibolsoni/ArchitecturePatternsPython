@@ -1,6 +1,5 @@
 from typing import Optional
 
-from domain.command import Allocate
 from domain.event import OutOfStock
 from domain.message import Message
 from domain.model.batch import Batch
@@ -35,10 +34,12 @@ class Product:
 			return None
 
 	def change_batch_quantity(self, reference: Reference, quantity: Quantity):
+		from domain.event.deallocated import Deallocated
+
 		batch = next(b for b in self.batches if b.reference == reference)
 		batch.change_purchased_quantity(quantity=quantity)
 		while batch.available_quantity < 0:
 			line = batch.deallocate_smallest()
 			self.events.append(
-				Allocate(reference=line.reference, sku=line.sku, quantity=line.quantity)
+				Deallocated(orderid=line.reference, sku=line.sku, quantity=line.quantity)
 			)

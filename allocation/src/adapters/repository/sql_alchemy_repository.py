@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 
-from adapters import AbstractRepository
+from adapters.repository.repository import AbstractRepository
 from domain.model import Sku, Product, Reference, Batch
 
 

@@ -4,9 +4,11 @@ from typing import Callable, Dict, Type, Union
 from domain.command import Command, Allocate, ChangeBatchQuantity, CreateBatch
 from domain.event import Event, OutOfStock
 from domain.event.allocated import Allocated
+from domain.event.deallocated import Deallocated
 from domain.model import Reference
 from service_layer import allocate, add_batch, change_batch_quantity, AbstractUnitOfWork
-from service_layer.handlers import send_out_of_stock_notification, publish_allocated_event
+from service_layer.handlers import send_out_of_stock_notification, publish_allocated_event, \
+	add_allocation_to_read_model, remove_allocation_from_read_model, reallocate
 
 logger = logging.getLogger(__name__)
 
@@ -56,7 +58,14 @@ class AbstractMessageBus:
 class MessageBus(AbstractMessageBus):
 	EVENT_HANDLERS: Dict[Type[Event], list[Callable]] = {
 		OutOfStock: [send_out_of_stock_notification],
-		Allocated: [publish_allocated_event]
+		Allocated: [
+			publish_allocated_event,
+			add_allocation_to_read_model
+		],
+		Deallocated: [
+			remove_allocation_from_read_model,
+			reallocate
+		]
 	}
 	COMMAND_HANDLER: Dict[Type[Event], callable] = {
 		Allocate: allocate,

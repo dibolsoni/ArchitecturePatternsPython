@@ -15,16 +15,24 @@ def test_happy_path_returns_201_and_allocated_batch():
 	api_client.post_to_add_batch('otherbatch', 'CHAIR', 100, later.isoformat())
 
 	r = api_client.post_to_allocate('order1', sku='CHAIR', quantity=3)
-	assert r.status_code == 201
-	assert r.json()["reference"] == "earlybatch"
+	assert r.status_code == 202
+
+	r = api_client.get_allocation('order1')
+	assert r.ok
+	assert r.json() == [
+		{'sku': 'CHAIR', 'batchref': 'earlybatch'}
+	]
 
 
 @pytest.mark.usefixtures("postgres_db")
 @pytest.mark.usefixtures("restart_api")
 def test_unhappy_path_returns_400_and_error_message():
-	unknown_sku, orderid = "UNKNOWN_SKU", 'order1'
+	unknown_sku, orderid = "UNKNOWN_SKU", 'order2'
 
 	r = api_client.post_to_allocate(orderid=orderid, sku=unknown_sku, quantity=20, expect_success=False)
 
 	assert r.status_code == 400
 	assert r.json()["message"] == f'Invalid sku: {unknown_sku}'
+
+	r = api_client.get_allocation(orderid)
+	assert r.status_code == 404

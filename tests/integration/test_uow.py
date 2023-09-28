@@ -33,12 +33,12 @@ def get_allocated_batch_ref(session, orderid, sku):
 	return batch_ref
 
 
-def test_uow_can_retrieve_a_batch_and_allocate_to_it(session_factory):
-	session = session_factory()
+def test_uow_can_retrieve_a_batch_and_allocate_to_it(sqlite_session_factory):
+	session = sqlite_session_factory()
 	insert_batch(session, "batch1", "HIPSTER-WORKBENCH", 100, None)
 	session.commit()
 
-	uow = SqlAlchemyUnitOfWork(session_factory)
+	uow = SqlAlchemyUnitOfWork(sqlite_session_factory)
 	with uow:
 		product = uow.products.get(sku=Sku("HIPSTER-WORKBENCH"))
 		line = OrderLine(Reference("o1"), Sku("HIPSTER-WORKBENCH"), Quantity(10))
@@ -49,27 +49,27 @@ def test_uow_can_retrieve_a_batch_and_allocate_to_it(session_factory):
 	assert batch_ref == "batch1"
 
 
-def test_rolls_back_uncommitted_only_when_has_exception(session_factory):
-	uow = SqlAlchemyUnitOfWork(session_factory)
+def test_rolls_back_uncommitted_only_when_has_exception(sqlite_session_factory):
+	uow = SqlAlchemyUnitOfWork(sqlite_session_factory)
 	with uow:
 		insert_batch(uow.session, "batch1", "MEDIUM-PLINTH", 100, None)
 
-	new_session = session_factory()
+	new_session = sqlite_session_factory()
 	rows = list(new_session.execute('SELECT * FROM "batch"'))
 	assert rows == [(1, 'batch1', 'MEDIUM-PLINTH', 100, None)]
 
 
-def test_rolls_back_on_error(session_factory):
+def test_rolls_back_on_error(sqlite_session_factory):
 	class MyException(Exception):
 		pass
 
-	uow = SqlAlchemyUnitOfWork(session_factory)
+	uow = SqlAlchemyUnitOfWork(sqlite_session_factory)
 	with pytest.raises(MyException):
 		with uow:
 			insert_batch(uow.session, "batch1", "LARGE-FORK", 100, None)
 			raise MyException()
 
-	new_session = session_factory()
+	new_session = sqlite_session_factory()
 	rows = list(new_session.execute('SELECT * FROM "batch"'))
 	assert rows == []
 

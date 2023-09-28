@@ -1,10 +1,12 @@
-from adapters.email.email import send_email
+from adapters.email import Email
 from adapters.redis.event_publisher import publish
 from domain.command import Allocate, CreateBatch, ChangeBatchQuantity
 from domain.event import OutOfStock
 from domain.event.allocated import Allocated
+from domain.event.deallocated import Deallocated
 from domain.model import Batch, OrderLine, Reference, Product
 from service_layer.unit_of_work.unit_of_work import AbstractUnitOfWork
+from service_layer.unit_of_work.sql_alchemy_unit_of_work import SqlAlchemyUnitOfWork
 
 
 class InvalidSku(Exception):
@@ -20,9 +22,18 @@ def allocate(
 		product = uow.products.get(sku=command.sku)
 		if product is None:
 			raise InvalidSku(f'Invalid sku: {order_line.sku}')
-		batchref = product.allocate(order_line)
+		product.allocate(order_line)
 		uow.commit()
-	return batchref
+
+
+def reallocate(
+	event: Deallocated,
+	uow: AbstractUnitOfWork
+):
+	with uow:
+		product = uow.products.get(sku=event.sku)
+		product.events.append(Allocate(reference=event.orderid, sku=event.sku, quantity=event.quantity))
+		uow.commit()
 
 
 def add_batch(
@@ -56,9 +67,9 @@ def send_out_of_stock_notification(
 	event: OutOfStock,
 	uow: AbstractUnitOfWork
 ):
-	send_email(
+	Email.send_mail(
 		'stock@made.com',
-		f'Out of stock {event.sku}'
+		f'Out of stock: {event.sku}'
 	)
 
 
@@ -66,3 +77,26 @@ def publish_allocated_event(
 	event: Allocated, uow: AbstractUnitOfWork
 ):
 	publish('line_allocated', event)
+
+
+def add_allocation_to_read_model(
+	event: Allocated, uow: SqlAlchemyUnitOfWork
+):
+	with uow:
+		uow.session.execute(
+			'INSERT INTO allocations_view (order_line_id, sku, batch_reference)'
+			' VALUES (:orderid, :sku, :batchref)',
+			dict(orderid=event.orderid, sku=event.sku, batchref=event.batchref)
+		)
+		uow.commit()
+
+
+def remove_allocation_from_read_model(
+	event: Deallocated, uow: SqlAlchemyUnitOfWork
+):
+	with uow:
+		uow.session.execute(
+			'DELETE FROM allocations_view'
+			' WHERE orderid = :orderid AND sku = :sku'
+		),
+		dict(orderid=event.orderid, sku=event.sku)

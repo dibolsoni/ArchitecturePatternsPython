@@ -1,10 +1,13 @@
 from datetime import date
+from unittest.mock import patch
 
-from adapters import AbstractRepository
-from adapters.repository import TrackingRepository
+import pytest
+
+from adapters.email import Email
+from adapters.repository import TrackingRepository, AbstractRepository
 from domain.model import Product, Sku, Reference, Quantity
 from domain.command import Allocate, CreateBatch, ChangeBatchQuantity
-from service_layer import AbstractUnitOfWork, MessageBus
+from service_layer import AbstractUnitOfWork, MessageBus, InvalidSku
 
 
 class FakeRepository(AbstractRepository):
@@ -48,8 +51,34 @@ class TestAllocate:
 	def test_returns_allocation(self):
 		uow = FakeUnitOfWork()
 		MessageBus.handle(CreateBatch('batch1', 'COMPLICATED-LAMP', 100), uow)
-		result = MessageBus.handle(Allocate('o1', 'COMPLICATED-LAMP', 10), uow)
-		assert result[0] == 'batch1'
+		MessageBus.handle(Allocate('o1', 'COMPLICATED-LAMP', 10), uow)
+		[batch] = uow.products.get('COMPLICATED-LAMP').batches
+		assert batch.available_quantity == 90
+
+	def test_errors_for_invalid_sku(self):
+		uow = FakeUnitOfWork()
+		MessageBus.handle(CreateBatch('b1', 'AREALSKU', 100, None), uow)
+
+		with pytest.raises(InvalidSku, match='Invalid sku: NONEXISTENTSKU'):
+			MessageBus.handle(Allocate('o1', "NONEXISTENTSKU", 10), uow)
+
+	def test_commits(self):
+		uow = FakeUnitOfWork()
+		MessageBus.handle(
+			CreateBatch("b1", "OMINOUS-MIRROR", 100, None), uow
+		)
+		MessageBus.handle(Allocate("o1", "OMINOUS-MIRROR", 10), uow)
+		assert uow.committed
+
+	def test_sends_email_on_out_of_stock_error(self):
+		uow = FakeUnitOfWork()
+		MessageBus.handle(
+			CreateBatch("b1", "POPULAR-CURTAINS", 9, None), uow
+		)
+
+		with patch.object(Email, 'send_mail') as mock_send_mail:
+			MessageBus.handle(Allocate("o1", "POPULAR-CURTAINS", 10), uow)
+			mock_send_mail.assert_called_with('stock@made.com', 'Out of stock: POPULAR-CURTAINS')
 
 
 class TestChangeBatchQuantity:
@@ -63,15 +92,15 @@ class TestChangeBatchQuantity:
 
 	def test_reallocates_if_necessary(self):
 		uow = FakeUnitOfWork()
-		event_history = [
+		history = [
 			CreateBatch(Reference('batch1'), Sku('INDIFFERENT-TABLE'), Quantity(50), None),
 			CreateBatch(Reference('batch2'), Sku('INDIFFERENT-TABLE'), Quantity(50), date.today()),
 			Allocate(Reference('order1'), Sku('INDIFFERENT-TABLE'), Quantity(5)),
 			Allocate(Reference('order2'), Sku('INDIFFERENT-TABLE'), Quantity(10)),
 			Allocate(Reference('order3'), Sku('INDIFFERENT-TABLE'), Quantity(20)),
 		]
-		for e in event_history:
-			MessageBus.handle(e, uow)
+		for m in history:
+			MessageBus.handle(m, uow)
 		[batch1, batch2] = uow.products.get(sku=Sku('INDIFFERENT-TABLE')).batches
 		assert batch1.available_quantity == 15
 		assert batch2.available_quantity == 50

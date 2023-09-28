@@ -10,28 +10,28 @@ from sqlalchemy.orm import sessionmaker, clear_mappers
 from tenacity import stop_after_delay, retry
 
 import config
-from adapters import start_mappers, metadata
+from adapters.repository import start_mappers, metadata
 from config import DB
 from domain.model import Batch, OrderLine
 
 
 @pytest.fixture()
 def in_memory_db():
-	engine = create_engine(DB.URI_TEST, echo=True)
+	engine = create_engine(DB.URI_TEST)
 	metadata.create_all(engine)
 	return engine
 
 
 @pytest.fixture
-def session_factory(in_memory_db):
+def sqlite_session_factory(in_memory_db):
 	start_mappers()
 	yield sessionmaker(bind=in_memory_db)
 	clear_mappers()
 
 
 @pytest.fixture
-def test_session(session_factory):
-	return session_factory()
+def test_session(sqlite_session_factory):
+	return sqlite_session_factory()
 
 
 @retry(stop=stop_after_delay(10))

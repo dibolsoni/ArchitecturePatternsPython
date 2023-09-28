@@ -17,8 +17,6 @@ class AbstractUnitOfWork(ABC):
 
 	def collect_new_events(self) -> list[Event]:
 		for product in self.products.seen:
-			if not hasattr(product, 'events'):
-				return
 			while product.events:
 				yield product.events.pop(0)
 
