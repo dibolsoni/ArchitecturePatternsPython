@@ -21,14 +21,14 @@ test: restart-db unit-tests integration-tests e2e-tests
 unit-tests:
 	docker-compose run --rm --no-deps --name unit_tests --entrypoint="pytest /tests/unit -vv" tests
 
-integration-tests:
+integration-tests: up restart-db
 	docker-compose run --rm --no-deps --name integration_tests --entrypoint="pytest /tests/integration -vv" tests
 
-e2e-tests:
+e2e-tests: up restart-db
 	docker-compose run --rm --no-deps --name e2e-tests --entrypoint="pytest /tests/e2e -vv" tests
 
 restart-db:
-	-docker exec -it postgres psql -U postgres -c "SELECT pg_reload_conf();"
+	-docker exec -it architecture-patterns-db psql -d warehouse -U allocation -c "drop table allocation; drop table batch; drop table order_line; drop table product; drop table allocations_view;"
 
 black:
 	black -l 86 $$(find * -name '*.py')
