@@ -30,3 +30,7 @@ Four key design patterns:
 - [x] Command-Query Responsibility Segregation (CQRS)
 - [x] Dependency Injection and Bootstrapping
 
+
+### Final Architecture
+![architecture_warehouse](https://github.com/dibolsoni/ArchitecturePatternsPython/assets/17862078/816380aa-286f-4eb8-85b5-5e99f2959680)
+
