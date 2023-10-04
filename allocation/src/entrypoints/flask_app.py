@@ -2,14 +2,15 @@ from datetime import datetime
 
 from flask import Flask, request, jsonify
 
-from adapters.repository import start_mappers
+import bootstrap
 from domain.command import Allocate, CreateBatch
-from service_layer import InvalidSku
-from service_layer import SqlAlchemyUnitOfWork, MessageBus
+from service_layer.handlers import InvalidSku
+from service_layer.message_bus import MessageBus
+from service_layer.unit_of_work import SqlAlchemyUnitOfWork
 from views.allocations import allocations_view
 
 app = Flask(__name__)
-start_mappers()
+bus: MessageBus = bootstrap.bootstrap()
 
 
 @app.get('/')
@@ -25,8 +26,7 @@ def allocate():
 			sku=request.json['sku'],
 			quantity=request.json['quantity']
 		)
-		uow = SqlAlchemyUnitOfWork()
-		MessageBus.handle(message=cmd, uow=uow)
+		bus.handle(cmd)
 	except InvalidSku as e:
 		return {'message': str(e)}, 400
 	return "OK", 202
@@ -52,8 +52,7 @@ def add_batch():
 		quantity=request.json['quantity'],
 		eta=eta,
 	)
-	uow = SqlAlchemyUnitOfWork()
-	MessageBus.handle(message=event, uow=uow)
+	bus.handle(event)
 	return "OK", 201
 
 

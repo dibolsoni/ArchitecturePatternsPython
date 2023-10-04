@@ -7,7 +7,7 @@ from domain.model.custom_types import Sku, Reference, Quantity
 from domain.model.order_line import OrderLine
 
 
-class Product:
+class Product(object):
 
 	def __init__(self, sku: Sku, batches: list[Batch], version_number: int = 0):
 		self.sku: Sku = sku
@@ -41,5 +41,5 @@ class Product:
 		while batch.available_quantity < 0:
 			line = batch.deallocate_smallest()
 			self.events.append(
-				Deallocated(orderid=line.reference, sku=line.sku, quantity=line.quantity)
+				Deallocated(reference=line.reference, sku=line.sku, quantity=line.quantity)
 			)

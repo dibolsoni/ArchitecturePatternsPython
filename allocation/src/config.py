@@ -33,3 +33,14 @@ class REDIS:
 	@classmethod
 	def host_and_port(cls) -> dict:
 		return dict(host=cls.HOST, port=cls.PORT, decode_responses=True)
+
+
+class EMAIL:
+	HOST = config("EMAIL_HOST", "localhost")
+	PORT = config("EMAIL_PORT", 1025)
+	HTTP_PORT = config("HTTP_PORT", 8025)
+
+	@classmethod
+	def host_and_port(cls) -> dict:
+		return dict(host=cls.HOST, port=cls.PORT, http_port=cls.HTTP_PORT)
+

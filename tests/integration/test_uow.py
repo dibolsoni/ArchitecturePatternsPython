@@ -5,7 +5,7 @@ import traceback
 import pytest
 
 from domain.model import OrderLine, Quantity, Sku, Reference
-from service_layer import SqlAlchemyUnitOfWork
+from service_layer.unit_of_work import SqlAlchemyUnitOfWork
 
 
 def insert_batch(session, ref, sku, qty, eta, product_version=1):
@@ -33,12 +33,12 @@ def get_allocated_batch_ref(session, orderid, sku):
 	return batch_ref
 
 
-def test_uow_can_retrieve_a_batch_and_allocate_to_it(sqlite_session_factory):
-	session = sqlite_session_factory()
+def test_uow_can_retrieve_a_batch_and_allocate_to_it(test_session_factory):
+	session = test_session_factory()
 	insert_batch(session, "batch1", "HIPSTER-WORKBENCH", 100, None)
 	session.commit()
 
-	uow = SqlAlchemyUnitOfWork(sqlite_session_factory)
+	uow = SqlAlchemyUnitOfWork(test_session_factory)
 	with uow:
 		product = uow.products.get(sku=Sku("HIPSTER-WORKBENCH"))
 		line = OrderLine(Reference("o1"), Sku("HIPSTER-WORKBENCH"), Quantity(10))
@@ -87,7 +87,6 @@ def try_to_allocate(orderid, sku, exceptions):
 		exceptions.append(e)
 
 
-@pytest.mark.skip('sleep is not working')
 def test_concurrent_updates_to_version_are_not_allowed(postgres_session_factory):
 	sku, batch = 'LAMP', 'batch1'
 	session = postgres_session_factory()

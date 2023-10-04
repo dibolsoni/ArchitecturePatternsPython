@@ -21,5 +21,5 @@ A multi-region order allocator to batches of stock.
 - [x] Command handler
 - [x] Event-Driven Architecture
 - [x] Command-Query Responsibility Segregation (CQRS)
-- [ ] Dependency Injection and Bootstrapping
+- [x] Dependency Injection and Bootstrapping
 

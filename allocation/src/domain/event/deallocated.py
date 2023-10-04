@@ -6,6 +6,6 @@ from domain.model import Reference, Sku, Quantity
 
 @dataclass
 class Deallocated(Event):
-	orderid: Reference
+	reference: Reference
 	sku: Sku
 	quantity: Quantity

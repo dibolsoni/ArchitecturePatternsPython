@@ -42,8 +42,8 @@ allocation = Table(
 	Column('batch_id', ForeignKey('batch.id'))
 )
 
-allocations_view = Table(
-	'allocations_view',
+allocation_view = Table(
+	'allocation_view',
 	metadata,
 	Column('order_line_id', String(255)),
 	Column('sku', String(255)),

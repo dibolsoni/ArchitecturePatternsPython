@@ -11,6 +11,8 @@ services:
                 condition: service_started
             postgres:
                 condition: service_healthy
+            mailhog:
+                condition: service_started
         healthcheck:
             test: curl -f http://app:8000 || exit 1
             interval: 5s
@@ -116,5 +118,14 @@ services:
             - server
         ports:
             - "6379:6379"
+
+    mailhog:
+        image: mailhog/mailhog
+        container_name: mailhog
+        ports:
+            - "1025:1025"
+            - "8025:8025"
+        networks:
+            - server
 networks:
     server: { }

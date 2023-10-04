@@ -1,10 +1,14 @@
 from abc import ABC, abstractmethod
+
+from sqlalchemy.orm import Session
+
 from adapters.repository import TrackingRepository
 from domain.event import Event
 
 
 class AbstractUnitOfWork(ABC):
 	products: TrackingRepository
+	session: Session
 
 	def __enter__(self):
 		return self

@@ -7,9 +7,11 @@ import redis
 import config
 from domain.event import Event
 
-r = redis.Redis(**config.REDIS.host_and_port())
 
+class EventPublisher:
+	def __init__(self):
+		self.redis = redis.Redis(**config.REDIS.host_and_port())
 
-def publish(channel, event: Event):
-	logging.debug(f'REDIS publishing channel:{channel} event: {event}')
-	r.publish(channel, json.dumps(asdict(event)))
+	def publish(self, channel: str, event: Event):
+		logging.debug(f'REDIS publishing channel:{channel} event: {event}')
+		self.redis.publish(channel, json.dumps(asdict(event)))

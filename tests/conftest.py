@@ -24,14 +24,14 @@ def in_memory_db():
 
 @pytest.fixture
 def sqlite_session_factory(in_memory_db):
-	start_mappers()
 	yield sessionmaker(bind=in_memory_db)
-	clear_mappers()
 
 
 @pytest.fixture
-def test_session(sqlite_session_factory):
-	return sqlite_session_factory()
+def test_session_factory(sqlite_session_factory):
+	start_mappers()
+	yield sqlite_session_factory
+	clear_mappers()
 
 
 @retry(stop=stop_after_delay(10))
@@ -45,26 +45,26 @@ def wait_for_webapp_to_come_up():
 
 
 @pytest.fixture
-def default_batches(test_session) -> list[Batch]:
+def default_batches(test_session_factory) -> list[Batch]:
 	batches = [
 		Batch('batch1', 'sku1', 100, eta=None),
 		Batch('batch2', 'sku2', 100, eta=date.today()),
 		Batch('batch2', 'sku2', 100, eta=date.today() + timedelta(days=1))
 	]
-	test_session.add_all(batches)
+	test_session_factory.add_all(batches)
 	return batches
 
 
 @pytest.fixture
-def default_order_lines(test_session) -> list[OrderLine]:
+def default_order_lines(test_session_factory) -> list[OrderLine]:
 	order_lines = [
 		OrderLine('order1', 'sku1', 2),
 		OrderLine('order2', 'sku1', 3),
 		OrderLine('order3', 'sku1', 1),
 		OrderLine('order4', 'sku2', 5),
 	]
-	test_session.add_all(order_lines)
-	test_session.flush()
+	test_session_factory.add_all(order_lines)
+	test_session_factory.flush()
 	return order_lines
 
 
@@ -90,7 +90,7 @@ def postgres_session(postgres_session_factory):
 
 @pytest.fixture
 def restart_api():
-	(Path(__file__).parent / "../allocation/src/entrypoints/api.py").touch()
+	(Path(__file__).parent / "../allocation/src/entrypoints/flask_app.py").touch()
 	time.sleep(0.5)
 	wait_for_webapp_to_come_up()
 
