@@ -8,8 +8,15 @@ As Python continues to grow in popularity, projects are becoming larger and more
 ### Domain
 A multi-region order allocator to batches of stock.
 
+Four key design patterns:
+ - The **Repository pattern**, an abstraction over the idea of persistent storage
+ - The **Service layer pattern** clearly define where the use cases begin and end
+ - The **Unit of work** to provide atomic operations
+ - The **Aggregate pattern** to enforce the integrity of the data
+
 ### Topics:
-- [x] Domain Modeling
+
+- [x] Domain Model
 - [x] Repository Pattern
 - [x] Abstractions
 - [x] Api and Service Layer
