@@ -32,5 +32,5 @@ Four key design patterns:
 
 
 ### Final Architecture
-![architecture_warehouse](https://github.com/dibolsoni/ArchitecturePatternsPython/assets/17862078/816380aa-286f-4eb8-85b5-5e99f2959680)
+<img src="https://github.com/dibolsoni/ArchitecturePatternsPython/assets/17862078/816380aa-286f-4eb8-85b5-5e99f2959680" width="600" height="400" />
 
